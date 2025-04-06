@@ -30,8 +30,8 @@
 - Giúp xác thực người dùng trước khi xử lý request trong Controller
 - Guards thường được sử dụng để bảo vệ API bằng cách:
   - Kiểm tra token
-  - Quyền truy cập (Role)
-  ...
+  - Quyền truy cập (Role - Authorization)
+  - Xác thực người dùng (Authentication)
 - Guard là 1 lớp được đánh dấu `@Injectable()` và triển khai interface `CanActivate`
 
 ## 2. So sánh
@@ -78,5 +78,167 @@ interface ExecutionContext extends ArgumentHost {
   switchToRpc(): RpcArgumentHost;
   getClass<T = any>(): Type<T>;
   getHandler(): Function;
+}
+```
+
+## 4. Cách sử dụng Guards
+
+### 4.1 Tạo Guard
+
+- Có 2 cách để tạo Guard:
+  - Tạo thủ công
+  - Sử dụng CLI của NestJS
+
+- Cách 1: Tạo thủ công: Tạo 1 lớp Guard được đánh dấu `@Injectable()` và triển khai interface `CanActivate`
+
+```ts
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    const request = context.switchToHttp().getRequest();
+    return this.validateRequest(request);
+  }
+
+  private validateRequest(request: Request): boolean {
+    // Kiểm tra token hoặc thông tin xác thực khác
+    return true; // Hoặc false nếu không hợp lệ
+  }
+}
+```
+
+- Cách 2: Sử dụng CLI của NestJS để tạo Guard tự động:
+
+```bash
+nest g guard auth
+```
+&rarr; Kết quả sẽ tạo ra 1 file `auth.guard.ts` trong thư mục `src/auth` với nội dung như sau:
+
+```ts
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    return true;
+  }
+}
+```
+
+### 4.2 Sử dụng Guard trong Controller
+
+- Ta có thể sử dụng Guard trong Controller bằng cách sử dụng decorator `@UseGuards()` và truyền vào Guard mà ta đã tạo ở trên
+- Ta có thể áp dụng Guard ở nhiều cấp độ khác nhau:
+  - Trên toàn bộ Controller
+  - Trên từng route handler cụ thể
+  - Kết hợp nhiều Guard với nhau
+
+- TH1: Sử dụng Guard trên toàn bộ Controller:
+
+```ts
+@Controller('auth')
+@UseGuards(AuthGuard)
+export class AuthController {
+  @Get('login')
+  login() {
+    return 'Login';
+  }
+
+  @Get('register')
+  register() {
+    return 'Register';
+  }
+}
+```
+
+- TH2: Sử dụng Guard trên từng route handler cụ thể:
+
+```ts
+@Controller('auth')
+export class AuthController {
+  @Get('login')
+  @UseGuards(AuthGuard)
+  login() {
+    return 'Login';
+  }
+
+  @Get('register')
+  register() {
+    return 'Register';
+  }
+}
+```
+
+- TH3: Kết hợp nhiều Guard với nhau:
+
+```ts
+@Controller('auth')
+@UseGuards(AuthGuard, RoleGuard)
+export class AuthController {
+  @Get('login')
+  @UseGuards(AuthGuard, RoleGuard)
+  login() {
+    return 'Login';
+  }
+
+  @Get('register')
+  register() {
+    return 'Register';
+  }
+}
+```
+
+- TH4: Sử dụng Global Guards:
+  - Cú pháp:
+
+  ```ts 
+  app.useGlobalGuards(new AuthGuard());
+  ```
+
+## 5. Build-in Guards
+
+- NestJS cung cấp 1 số Guards có sẵn để sử dụng, bao gồm:
+  - `AuthGuard`: Xác thực người dùng bằng JWT hoặc Passport
+  - `RolesGuard`: Kiểm tra quyền truy cập dựa trên vai trò (Role)
+  - `ThrottlerGuard`: Giới hạn số lượng request từ 1 IP trong 1 khoảng thời gian nhất định (Rate Limiting)
+  - `WsGuard`: Xác thực người dùng trong WebSocket
+
+- Ví dụ sử dụng `AuthGuard`:
+
+```ts
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
+@Injectable()
+export class JwtAuthGuard implements CanActivate {
+  constructor(private jwtService: JwtService) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const token = this.extractToken(request);
+    
+    if (!token) {
+      throw new UnauthorizedException('Token not found');
+    }
+
+    try {
+      const payload = this.jwtService.verify(token);
+      request.user = payload;
+      return true;
+    } catch {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
+
+  private extractToken(request: Request): string | null {
+    // Logic trích xuất token từ header
+  }
 }
 ```
