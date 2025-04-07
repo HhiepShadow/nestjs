@@ -98,9 +98,12 @@ export class UsersController {
 ```
 
 (2) Value Provider:
+
 - Value Provider là những giá trị đơn giản như object, string, number có thể được cung cấp dưới dạng provider
 - Là 1 cách để cung cấp các giá trị tĩnh hoặc cấu hình cho ứng dụng  
+
 __VD__:
+
 ```ts
 // config.ts
 export const config = {
@@ -123,10 +126,26 @@ import { config } from './config';
 export class AppModule {}
 ```
 
+- Sử dụng:
+
+```ts
+@Injectable()
+export class AppService {
+  constructor(@Inject('CONFIG') private config: any) {}
+
+  getConfig() {
+    return this.config;
+  }
+}
+```
+
 (3) Factory Provider:
+
 - Factory Providers là những provider được tạo ra thông qua 1 hàm factory
 - Ta có thể sử dụng factory để tạo các giá trị hoặc instance phức tạp  
+
 __VD__:
+
 ```ts
 // app.module.ts
 import { Module } from '@nestjs/common';
@@ -147,10 +166,28 @@ import { Module } from '@nestjs/common';
 export class AppModule {}
 ```
 
+- Sử dụng:
+
+```ts
+@Injectable()
+export class AppService {
+  constructor(@Inject('API_CONFIG') private config: any) {}
+
+  getConfig() {
+    return this.config;
+  }
+}
+```
+
+- Factory Provider cho phép ta inject các dependency khác vào hàm factory thông qua `inject` property
+
 (4) Async Provider:
+
 - Async Provider là các provider mà giá trị của chúng được lấy thông qua các hàm bất đồng bộ (asynchronous)
 - Hữu dụng khi ta cần lấy các giá trị từ 1 API hoặc 1 nguồn dữ liệu nào đó bất đồng bộ  
+
 __VD__:
+
 ```ts
 // app.module.ts
 import { Module } from '@nestjs/common';
@@ -171,9 +208,61 @@ import { ConfigService } from './config.service';
 export class AppModule {}
 ```
 
-(5) Custom Provider:
-- Cho phép ta định nghĩa các provider tùy chỉnh, trong đó ta có thể chỉ định tên của provider và cách thức nó hoạt động  
+(5) Existing Provider:
+
+- Existing Provider cho phép ta sử dụng 1 
+provider đã tồn tại như là 1 dependency khác
+- Hữu dụng khi ta muốn cung cấp interface nhưng sử dụng 1 implementation cụ thể
+- Để sử dụng, ta chỉ cần chỉ định provider đã tồn tại trong `useExisting` property
+
 __VD__:
+
+```ts
+// my.service.ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class MyService {
+  getHello(): string {
+    return 'Hello from MyService';
+  }
+}
+
+// my.module.ts
+import { Module } from '@nestjs/common';
+import { MyService } from './my.service';
+
+@Module({
+  providers: [
+    MyService,
+    {
+      provide: 'MyExistingService',
+      useExisting: MyService, // Sử dụng MyService như là 1 existing provider
+    }
+  ]
+})
+export class MyModule {}
+```
+
+- Sử dụng:
+
+```ts
+@Injectable()
+export class AppService {
+  constructor(@Inject('MyExistingService') private myService: MyService) {}
+
+  getHello(): string {
+    return this.myService.getHello();
+  }
+}
+```
+
+(6) Custom Provider:
+
+- Cho phép ta định nghĩa các provider tùy chỉnh, trong đó ta có thể chỉ định tên của provider và cách thức nó hoạt động  
+
+__VD__:
+
 ```ts
 // custom.provider.ts
 export const MyCustomProvider = {

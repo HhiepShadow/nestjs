@@ -31,4 +31,97 @@
 - Decorator có thể được sử dụng để thay đổi hành vi của các class, method, property hoặc parameter mà nó được áp dụng lên.
 - Decorator có thể được sử dụng để thêm các tính năng mới vào các class, method, property hoặc parameter mà nó được áp dụng lên.
 
-## 2. 
+## 2. Cú pháp tạo Decorator
+
+### 2.1. Decorator cho class
+
+```ts
+export function MyDecorator(): ClassDecorator {
+  return (target: Function) => {
+    // Thực hiện một số hành động với class
+    console.log(`Class ${target.name} đã được tạo ra!`);
+  }
+}
+```
+
+- Sử dụng decorator cho class:
+
+```ts
+@MyDecorator()
+export class MyClass {
+  constructor() {
+    console.log('MyClass đã được khởi tạo!');
+  }
+}
+```
+
+- Kết quả:
+
+```ts
+Class MyClass đã được tạo ra!
+MyClass đã được khởi tạo!
+```
+
+- Decorator cho class nhận vào một tham số là class mà nó được áp dụng lên. Tham số này có kiểu là `Function`.
+
+### 2.2. Decorator cho method (Sử dụng `SetMetadata`)
+
+```ts
+import { SetMetadata } from '@nestjs/common';
+
+export const MyDecorator = (value: any) => SetMetadata('myDecorator', value);
+```
+
+VD: Tạo decorator Roles
+```ts
+import { SetMetadata } from '@nestjs/common';
+
+export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
+```
+
+### 2.3. Parameter Decorator
+
+```ts
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+
+export const MyParamDecorator = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user; // Trả về user từ request
+  },
+);
+```
+VD: Tạo decorator `User`
+
+```ts
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { User } from './user.entity';
+
+export const User = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext): User => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user; // Trả về user từ request
+  },
+);
+```
+
+- Sử dụng decorator `User` trong controller:
+
+```ts
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { User } from './user.decorator';
+import { User as UserEntity } from './user.entity';
+import { AuthService } from './auth.service';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Get('profile')
+  @UseGuards(AuthGuard('jwt'))
+  getProfile(@User() user: UserEntity) {
+    return user; // Trả về thông tin người dùng
+  }
+}
+```
