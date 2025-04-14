@@ -1,5 +1,5 @@
 {
-  "name": "lesson14",
+  "name": "lesson25",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -20,10 +20,16 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@bull-board/express": "^6.9.1",
+    "@nestjs/bull": "^11.0.2",
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
-    "lesson14": "file:",
+    "@types/bull": "^4.10.4",
+    "bull": "^4.16.5",
+    "ioredis": "^5.6.1",
+    "lesson25": "file:",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

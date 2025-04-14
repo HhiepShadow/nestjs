@@ -1,5 +1,5 @@
 {
-  "name": "lesson14",
+  "name": "lesson21",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -21,9 +21,14 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
-    "lesson14": "file:",
+    "@types/dotenv": "^8.2.3",
+    "dotenv": "^16.5.0",
+    "lesson21": "file:",
+    "mongoose": "^8.13.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
